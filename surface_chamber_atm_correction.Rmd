@@ -56,7 +56,7 @@ Use the two endmembers in a 2-pool mixing model to calculate fractional contribu
 surface <- surface %>% mutate(f_soil = (C13_ap - C13_air_mean)/(C13_soil_mean - C13_air_mean), f_soil = ifelse(f_soil < 1, f_soil, 1), f_air = 1 - f_soil, f_soil_sd = (f_soil^2 * (C13_soil_sd^2 + C13_air_sd^2) / (C13_soil_mean - C13_air_mean)^2)^0.5)
 ```
 
-Use f_soil values to correct measured 14C values for the atmospheric fraction
+Use f_soil values to correct measured 14C values for the atmospheric fraction.  Calculate error ranges based on Phillips, D. & Gregg, J. Oecologia (2001) 127: 171. https://doi.org/10.1007/s004420000578 
 ```{r}
 surface <- surface %>% mutate(C14_atmcorr_permil = (X14C - C14_air_mean * f_air) / f_soil, A = C14_air_mean * f_air, B = X14C - A, Asd = (A^2 * (C14_air_sd^2 / C14_air_mean^2 + f_soil_sd^2 / f_soil^2))^0.5, Bsd = (X14C_sigma^2 + Asd^2)^0.5, C14_atmcorr_permil_sd = (C14_atmcorr_permil^2 * (Bsd^2 / B^2 + f_soil_sd^2 / f_soil^2))^0.5)
 
