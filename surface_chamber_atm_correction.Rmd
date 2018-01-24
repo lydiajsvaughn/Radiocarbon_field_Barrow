@@ -1,0 +1,64 @@
+---
+title: "Surface chamber atmosphere correction"
+author: "Lydia Vaughn"
+date: "January 23, 2018"
+output: html_document
+---
+
+field includes all C13 and non-atmosphere-corrected C14 data
+chambers lists the names of samples for which CO2 concentrations were greater than 10x atmosphere
+```{r}
+field <- read.csv('data/field.csv', header=T, sep=',', stringsAsFactors=F)
+chambers <- readRDS("data/C13endmember_names.rds")
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+plot the 13C values of the high concentration samples by polygon type and position
+```{r}
+TypePlot <- ggplot(field %>% filter(sample_name %in% chambers), aes(x=type, y=X13C)) +
+  geom_boxplot() +
+  geom_point() +
+  ggtitle("high [CO2] samples")+
+  ylab(expression(Delta^13*C-CO[2] ~ ("\u2030"))) +
+  xlab("polygon type")
+print(TypePlot)
+
+field$feature <- paste(field$type, field$position)
+
+FeaturePlot <- ggplot(field %>% filter(sample_name %in% chambers), aes(x=feature, y=X13C)) +
+  geom_boxplot() +
+  geom_point() +
+  ggtitle("high [CO2] samples")+
+  ylab(expression(Delta^13*C-CO[2] ~ ("\u2030"))) +
+  xlab("polygon features")
+print(FeaturePlot)
+```
+
+The high and flat polygon samples are 13C-enriched relative to the low-centered polygons.  Not enough edge data are available to determine whether edges are distinct.  Calculate a separate soil 13C end member for each polygon type in atom percent units. 
+```{r}
+field <- field %>% mutate(C13_ap = 100/((1/(((X13C/1000)+1)*0.0112372))+1)) %>% left_join(field %>% filter(sample_name %in% chambers) %>% mutate(C13_ap = 100/((1/(((X13C/1000)+1)*0.0112372))+1)) %>% group_by(type) %>% summarize(C13_soil_mean = mean(C13_ap, na.rm=T), C13_soil_sd = sd(C13_ap, na.rm=T), C13_soil_n = length(!is.na(C13_ap))))
+```
+
+Calculate atmosphere 13C and 14C end members for each year and add it to a dataframe of just surface samples.
+```{r}
+field$observation_date <- ymd(field$observation_date)
+field$obs_year <- format(field$observation_date, "%Y")
+
+surface <- field %>% filter(material == "surface emissions") %>% left_join(field %>% filter(material == "background atmosphere") %>% group_by(obs_year) %>% summarize(C14_air_mean = mean(X14C), C14_air_n = length(X14C), C14_air_sd = ifelse(C14_air_n == 1, X14C_sigma, sum(X14C_sigma^2)^0.5/C14_air_n), C13_air_mean = mean(C13_ap), C13_air_n = length(C13_ap), C13_air_sd = ifelse(C13_air_n == 1, 0, sd(C13_ap))))
+```
+
+Use the two endmembers in a 2-pool mixing model to calculate fractional contributions of soil respiration and background atmosphere to each chamber measurement.  If the fractional contribution from soil respiration is greater than 1, use f_soil = 1
+```{r}
+surface <- surface %>% mutate(f_soil = (C13_ap - C13_air_mean)/(C13_soil_mean - C13_air_mean), f_soil = ifelse(f_soil < 1, f_soil, 1), f_air = 1 - f_soil, f_soil_sd = (f_soil^2 * (C13_soil_sd^2 + C13_air_sd^2) / (C13_soil_mean - C13_air_mean)^2)^0.5)
+```
+
+Use f_soil values to correct measured 14C values for the atmospheric fraction
+```{r}
+surface <- surface %>% mutate(C14_atmcorr_permil = (X14C - C14_air_mean * f_air) / f_soil, A = C14_air_mean * f_air, B = X14C - A, Asd = (A^2 * (C14_air_sd^2 / C14_air_mean^2 + f_soil_sd^2 / f_soil^2))^0.5, Bsd = (X14C_sigma^2 + Asd^2)^0.5, C14_atmcorr_permil_sd = (C14_atmcorr_permil^2 * (Bsd^2 / B^2 + f_soil_sd^2 / f_soil^2))^0.5)
+
+write.csv(surface, 'data/atmosphere_corrected_chamber_radiocarbon.csv', quote=FALSE, row.names=FALSE)
+```
