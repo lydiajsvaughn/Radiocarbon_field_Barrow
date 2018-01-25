@@ -1,0 +1,103 @@
+---
+title: "Surfac chamber radiocarbon plots"
+author: "Lydia Vaughn"
+date: "January 24, 2018"
+output: html_document
+---
+
+```{r}
+atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header=T, sep=',', stringsAsFactors=F)
+```
+
+```{r}
+library(tidyverse)
+```
+
+get rid of low quality data; remove any measurements for which fs is less than 0.5
+```{r}
+highf <- atmcorr %>% filter(f_soil >= 0.5, !is.na(position))
+```
+
+Design a theme for all plots
+```{r}
+boxtheme <- theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
+  theme(axis.text.y = element_text(color="black", size=12)) +
+  theme(axis.text.x = element_text(color="black", size=14)) +
+  theme(axis.title.y = element_text(size=14)) +
+  theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) +
+  theme(axis.title.x = element_blank()) +
+  theme(plot.title = element_text(colour = "black", size=14, hjust = 0)) 
+
+
+```
+
+plot all high f_soil data, separated by position
+```{r}
+position <- ggplot(highf, aes(x=position, y=C14_atmcorr_permil)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_boxplot() +
+  geom_point() +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) +
+  scale_x_discrete(breaks=c("Center","Edge","Trough"), labels=c("Center","Rim","Trough")) 
+
+print(position + boxtheme)
+ggsave("chamber14C_position.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+```
+
+plot all high f_soil data, separated by type
+```{r}
+type <- ggplot(highf, aes(x=type, y=C14_atmcorr_permil)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_boxplot() +
+  geom_point() +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) +
+  scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered")) 
+
+
+print(type + boxtheme)
+ggsave("chamber14C_type.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+```
+
+Facet the above plot by polygon position
+```{r}
+type <- ggplot(highf, aes(x=type, y=C14_atmcorr_permil)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_boxplot() +
+  geom_point() +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) +
+  facet_grid(. ~ position)
+
+print(type + boxtheme)
+```
+
+Plot September 2014 data, separated by type
+```{r}
+type1409 <- ggplot(highf %>% filter(obs_year == "2014"), aes(x=type, y=C14_atmcorr_permil)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_boxplot() +
+  geom_point() +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) +
+  scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered")) 
+
+
+print(type1409 + boxtheme)
+ggsave("chamber14C_type_1409.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+```
+
+Make a bar graph of the above data
+```{r}
+summ1409 <- highf %>% filter(obs_year == "2014") %>% group_by(type) %>% summarize(meanC14 = mean(C14_atmcorr_permil), sdC14 = sd(C14_atmcorr_permil), nC14 = length(C14_atmcorr_permil)) %>% mutate(seC14 = sdC14/nC14^0.5)
+
+bar2014<-ggplot(summ1409, aes(x=type, y=meanC14)) +
+  geom_hline(yintercept=17.7, linetype="dashed", size=0.3) +
+  geom_bar(stat="identity", width=0.7) +
+  geom_errorbar(aes(ymin=meanC14-seC14, ymax=meanC14+seC14), position=position_dodge(), width=0.2, size=0.4) +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) +
+  geom_hline(yintercept=0, size=0.3) +
+    scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
+    ggtitle('b') 
+
+print(bar2014 +boxtheme) 
+```
