@@ -5,7 +5,7 @@ date: "January 24, 2018"
 output: html_document
 ---
 
-Data: atmosphere-corrected chamber radiocarbon data and surface CO2 flux data (available at http://dx.doi.org/10.5440/1364062)
+Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code. Surface CO2 flux data can be accessed at http://dx.doi.org/10.5440/1364062
 ```{r}
 atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header=T, sep=',', stringsAsFactors=F)
 flux <- read.csv('data/flux.csv', header=T, sep=',', stringsAsFactors=F)
