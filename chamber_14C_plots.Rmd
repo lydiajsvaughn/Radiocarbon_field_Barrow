@@ -5,10 +5,10 @@ date: "January 24, 2018"
 output: html_document
 ---
 
-Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code. Surface CO2 flux data can be accessed at http://dx.doi.org/10.5440/1364062
+Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code. data/flux_CO2_CH4_Barrow_2012_2014.csv includes all associated surface CO2 flux data and can be accessed at http://dx.doi.org/10.5440/1364062
 ```{r}
 atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header=T, sep=',', stringsAsFactors=F)
-flux <- read.csv('data/flux.csv', header=T, sep=',', stringsAsFactors=F)
+flux <- read.csv('data/flux_CO2_CH4_Barrow_2012_2014.csv', header=T, sep=',', stringsAsFactors=F)
 ```
 
 ```{r}
@@ -33,8 +33,6 @@ boxtheme <- theme_bw() +
   theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) +
   theme(axis.title.x = element_blank()) +
   theme(plot.title = element_text(colour = "black", size=14, hjust = 0)) 
-
-
 ```
 
 plot all high f_soil data, separated by position

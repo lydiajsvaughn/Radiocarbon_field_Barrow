@@ -5,10 +5,10 @@ date: "January 23, 2018"
 output: html_document
 ---
 
-Data: field.csv includes C13 and C14 data from surface chamber samples, soil pore gas samples, and air samples.  File is available at http://dx.doi.org/10.5440/1364062
+Data: radiocarbon_field_Barrow_2012_2013_2014.csv includes C13 and C14 data from surface chamber samples, soil pore gas samples, and air samples.  File is available at http://dx.doi.org/10.5440/1364062
 chambers is a vector of sample IDs with CO2 concentrations were greater than 10x atmosphere
 ```{r}
-field <- read.csv('data/field.csv', header=T, sep=',', stringsAsFactors=F)
+field <- read.csv('data/radiocarbon_field_Barrow_2012_2013_2014.csv', header=T, sep=',', stringsAsFactors=F)
 chambers <- readRDS("data/C13endmember_names.rds")
 ```
 
