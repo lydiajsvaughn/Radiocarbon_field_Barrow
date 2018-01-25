@@ -7,10 +7,13 @@ output: html_document
 
 ```{r}
 atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header=T, sep=',', stringsAsFactors=F)
+flux <- read.csv('data/flux.csv', header=T, sep=',', stringsAsFactors=F)
 ```
 
 ```{r}
 library(tidyverse)
+library(lubridate)
+library(gridExtra)
 ```
 
 get rid of low quality data; remove any measurements for which fs is less than 0.5
@@ -100,4 +103,30 @@ bar2014<-ggplot(summ1409, aes(x=type, y=meanC14)) +
     ggtitle('b') 
 
 print(bar2014 +boxtheme) 
+```
+
+Plot the CO2 fluxes from September 2014 as a bar chart
+```{r}
+flux$observation_date <- ymd(flux$observation_date)
+flux$month <- format(flux$observation_date, "%Y-%m")
+
+summflux <- flux %>% filter(month == "2014-08" | month == "2014-09") %>% group_by(type) %>% summarize(meanCO2 = mean(flux_CO2), sdCO2 = sd(flux_CO2), nCO2 = length(flux_CO2)) %>% mutate(seCO2 = sdCO2/nCO2^0.5)
+
+flux2014<-ggplot(summflux, aes(x=type, y=meanCO2)) +
+  geom_bar(stat="identity", width=0.7) +
+  geom_errorbar(aes(ymin=meanCO2-seCO2, ymax=meanCO2+seCO2), position=position_dodge(), width=0.2, size=0.4) +
+  ylab(expression(Ecosystem~Respiration~(mu*mol~CO[2]~~m^{-2}~~s^{-1}))) +
+  geom_hline(yintercept=0, size=0.3) +
+    scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
+    ggtitle('a') 
+
+print(flux2014 +boxtheme) 
+```
+
+Arrange the plots for publication
+```{r}
+p1 <- flux2014 + boxtheme
+p2 <- bar2014 + boxtheme
+combo <- grid.arrange(p1, p2, nrow=2, heights=c(8,8))
+ggsave("plots2014.png", combo, path="plots", width = 8,height = 11,dpi = 1200)
 ```
