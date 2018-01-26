@@ -42,7 +42,7 @@ flux14Ctheme <- theme_bw() +
 
 ```
 
-plot all high f_soil data, separated by position
+plot all highf data, separated by position
 ```{r}
 position <- ggplot(highf, aes(x=position, y=C14_atmcorr_permil)) +
   geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
@@ -55,7 +55,7 @@ print(position + boxtheme)
 ggsave("chamber14C_position.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
 ```
 
-plot all high f_soil data, separated by type
+plot all highf data, separated by type
 ```{r}
 type <- ggplot(highf, aes(x=type, y=C14_atmcorr_permil)) +
   geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
@@ -158,5 +158,73 @@ flux14Cplot <- ggplot(flux14C, aes(y=C14_atmcorr_permil, x=flux_CO2, colour=mont
 
 print(flux14Cplot + flux14Ctheme)
 ggsave("chamber14C_flux.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+```
 
+Add a doy variable to the highf dataframe
+```{r}
+highf$doy <- yday(highf$observation_date)
+```
+
+Plot all highf 14C measurements by month
+```{r}
+monthplot <- ggplot(highf, aes(y=C14_atmcorr_permil, x=month)) +
+  geom_boxplot() +
+  geom_point() +
+  ylab(expression(Delta^14*C[Reco]~("\u2030"))) +
+  ggtitle("all surface chamber measurements")
+print(monthplot)
+```
+
+With the above plot, combine data from different years and separate polygons by type
+```{r}
+types <- c(
+  flat = "Flat-centered",
+  high = "High-centered",
+  low = "Low-centered"
+)
+
+plot_labeller <- function(value){
+  value[value=="flat"] <- "Flat-centered"
+  value[value=="high"] <- "High-centered"
+  value[value=="low"] <- "Low-centered"
+  return(value)
+}
+
+striptheme <- theme(strip.background = element_rect(colour="white",fill="white")) +
+  theme(panel.spacing = unit(0.5,"lines")) +
+  theme(strip.text = element_text(size=14))
+
+monthplot_type <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=month)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_boxplot() +
+  geom_point() +
+  facet_grid(.~type, labeller=plot_labeller) +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
+  theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)) +
+
+print(monthplot_type + boxtheme + striptheme + theme(axis.text.x = element_text(angle=90,vjust=0.5)))
+ggsave("month_type_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+```
+
+Same plot but as a scatterplot with doy on the x axis
+```{r}
+monthplot_type_scatter <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=doy)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_point() +
+  facet_grid(.~type, labeller=plot_labeller) +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
+  theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)) +
+
+print(monthplot_type_scatter + flux14Ctheme + striptheme)
+```
+
+Remove faceting
+```{r}
+monthplot_scatter <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=doy)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_point() +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
+  theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)) +
+
+print(monthplot_scatter + flux14Ctheme)
 ```
