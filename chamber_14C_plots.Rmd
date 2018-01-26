@@ -22,7 +22,7 @@ get rid of low quality data; remove any measurements for which fs is less than 0
 highf <- atmcorr %>% filter(f_soil >= 0.5, !is.na(position))
 ```
 
-Design a theme for all plots
+Design a plot themes
 ```{r}
 boxtheme <- theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
@@ -32,7 +32,14 @@ boxtheme <- theme_bw() +
   theme(axis.title.y = element_text(size=14)) +
   theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) +
   theme(axis.title.x = element_blank()) +
-  theme(plot.title = element_text(colour = "black", size=14, hjust = 0)) 
+  theme(plot.title = element_text(colour = "black", size=14, hjust = 0))
+
+flux14Ctheme <- theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
+  theme(axis.text = element_text(color="black", size=12)) +
+  theme(axis.title = element_text(color="black", size=14)) 
+
 ```
 
 plot all high f_soil data, separated by position
@@ -128,4 +135,28 @@ p1 <- flux2014 + boxtheme
 p2 <- bar2014 + boxtheme
 combo <- grid.arrange(p1, p2, nrow=2, heights=c(8,8))
 ggsave("plots2014.png", combo, path="plots", width = 8,height = 11,dpi = 1200)
+```
+
+Make a dataframe that combines the flux data and radiocarbon data
+```{r}
+highf$observation_date <- ymd(highf$observation_date)
+highf$month <- format(highf$observation_date, "%Y-%m")
+
+flux14C <- highf %>% select(plot_ID,month,C14_atmcorr_permil) %>% inner_join(flux %>% filter(chamber_type == "opaque") %>% mutate(month = ifelse(month == "2014-08", "2014-09", month)) %>%  select(plot_ID,month,flux_CO2))
+```
+
+Make a scatter plot of all measurements
+```{r}
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+flux14Cplot <- ggplot(flux14C, aes(y=C14_atmcorr_permil, x=flux_CO2, colour=month, shape=month)) +
+  geom_point(size=2) +
+  ylab(expression(Delta^14*C[Reco]~("\u2030"))) +
+  scale_colour_manual(values=cbPalette, name="Month") +
+  scale_shape_discrete(name="Month") +
+  xlab(expression(R[eco]~(mu*mol~CO[2]~m^-2~y^-1))) 
+
+print(flux14Cplot + flux14Ctheme)
+ggsave("chamber14C_flux.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+
 ```
