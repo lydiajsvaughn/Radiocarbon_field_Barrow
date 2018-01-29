@@ -46,8 +46,10 @@ Design plot theme
 proftheme <-  theme_bw() +
   theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
-  theme(axis.text = element_text(color="black", size=12)) +
-  theme(axis.title = element_text(color="black", size=14)) 
+  theme(axis.text = element_text(color="black", size=9)) +
+  theme(axis.title = element_text(color="black", size=11)) +
+  theme(legend.text = element_text(color="black", size=9)) +
+  theme(legend.title = element_text(color="black", size=10))
 ```
 
 
@@ -79,7 +81,7 @@ noncorrplot <- ggplot(profiles_noncorr, aes(x=X14C, y=depth, group=measurement))
   geom_errorbarh(aes(xmax=X14C+X14C_sigma, xmin=X14C-X14C_sigma, colour=measurement)) +
   scale_colour_discrete(name="Profile") 
 print(noncorrplot + proftheme)
-ggsave("profile14C_noncorr.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+ggsave("profile14C_noncorr.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Plot each profile individually, using non-corrected data

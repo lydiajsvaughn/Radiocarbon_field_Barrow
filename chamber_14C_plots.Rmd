@@ -27,18 +27,17 @@ Design a plot themes
 boxtheme <- theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
   #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
-  theme(axis.text.y = element_text(color="black", size=12)) +
-  theme(axis.text.x = element_text(color="black", size=14)) +
-  theme(axis.title.y = element_text(size=14)) +
+  theme(axis.text.y = element_text(color="black", size=9)) +
+  theme(axis.text.x = element_text(color="black", size=11)) +
+  theme(axis.title.y = element_text(size=11)) +
   theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) +
-  theme(axis.title.x = element_blank()) +
-  theme(plot.title = element_text(colour = "black", size=14, hjust = 0))
+  theme(axis.title.x = element_blank()) 
 
 flux14Ctheme <- theme_bw() + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
   #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
-  theme(axis.text = element_text(color="black", size=12)) +
-  theme(axis.title = element_text(color="black", size=14)) 
+  theme(axis.text = element_text(color="black", size=9)) +
+  theme(axis.title = element_text(color="black", size=11)) 
 
 ```
 
@@ -52,7 +51,7 @@ position <- ggplot(highf, aes(x=position, y=C14_atmcorr_permil)) +
   scale_x_discrete(breaks=c("Center","Edge","Trough"), labels=c("Center","Rim","Trough")) 
 
 print(position + boxtheme)
-ggsave("chamber14C_position.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+ggsave("chamber14C_position.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 plot all highf data, separated by type
@@ -66,7 +65,7 @@ type <- ggplot(highf, aes(x=type, y=C14_atmcorr_permil)) +
 
 
 print(type + boxtheme)
-ggsave("chamber14C_type.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+ggsave("chamber14C_type.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Facet the above plot by polygon position
@@ -92,7 +91,7 @@ type1409 <- ggplot(highf %>% filter(obs_year == "2014"), aes(x=type, y=C14_atmco
 
 
 print(type1409 + boxtheme)
-ggsave("chamber14C_type_1409.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+ggsave("chamber14C_type_1409.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Make a bar graph of the above data
@@ -134,7 +133,7 @@ Arrange the plots for publication
 p1 <- flux2014 + boxtheme
 p2 <- bar2014 + boxtheme
 combo <- grid.arrange(p1, p2, nrow=2, heights=c(8,8))
-ggsave("plots2014.png", combo, path="plots", width = 8,height = 11,dpi = 1200)
+ggsave("plots2014.png", combo, path="plots", width = 6,height = 8,dpi = 300)
 ```
 
 Make a dataframe that combines the flux data and radiocarbon data
@@ -157,7 +156,7 @@ flux14Cplot <- ggplot(flux14C, aes(y=C14_atmcorr_permil, x=flux_CO2, colour=mont
   xlab(expression(R[eco]~(mu*mol~CO[2]~m^-2~y^-1))) 
 
 print(flux14Cplot + flux14Ctheme)
-ggsave("chamber14C_flux.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+ggsave("chamber14C_flux.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Add a doy variable to the highf dataframe
@@ -192,7 +191,7 @@ plot_labeller <- function(value){
 
 striptheme <- theme(strip.background = element_rect(colour="white",fill="white")) +
   theme(panel.spacing = unit(0.5,"lines")) +
-  theme(strip.text = element_text(size=14))
+  theme(strip.text = element_text(size=12))
 
 monthplot_type <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=month)) +
   geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
@@ -200,10 +199,10 @@ monthplot_type <- ggplot(highf %>% mutate(month = format(observation_date, "%B")
   geom_point() +
   facet_grid(.~type, labeller=plot_labeller) +
   ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
-  theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)) +
+  theme(axis.text.x = element_text(angle=90, size=11, color="black", vjust=0.5)) +
 
 print(monthplot_type + boxtheme + striptheme + theme(axis.text.x = element_text(angle=90,vjust=0.5)))
-ggsave("month_type_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+ggsave("month_type_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Same plot but as a scatterplot with doy on the x axis
