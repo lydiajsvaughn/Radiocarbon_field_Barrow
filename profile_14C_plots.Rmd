@@ -1,0 +1,99 @@
+---
+title: "Soil profile radiocarbon plots"
+author: "Lydia Vaughn"
+date: "29/01/2018"
+output: html_document
+---
+
+Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code.  naming.csv assigns a new name to each chamber according to the naming convention for this analysis. radiocarbon_field_Barrow_2012_2013_2014.csv includes all non-corrected radiocarbon data from surface chambers and soil pore-space CO2 samples.  Dataset can be accessed at http://dx.doi.org/10.5440/1364062
+```{r}
+atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header=T, sep=',', stringsAsFactors=F)
+noncorr <- read.csv('data/radiocarbon_field_Barrow_2012_2013_2014.csv', header=T, sep=',', stringsAsFactors=F)
+naming <- read.csv('data/naming.csv', header=T, sep=',', stringsAsFactors=F)
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+Add the new chamber names to both dataframes
+```{r}
+atmcorr <- atmcorr %>% left_join(naming)
+noncorr <- noncorr %>% left_join(naming)
+```
+
+Make a variable in each data frame for profile and sampling month
+```{r}
+atmcorr <- atmcorr %>% mutate(observation_date = ymd(observation_date), month = format(observation_date, "%Y-%m"), measurement = paste(name, month)) 
+
+noncorr <- noncorr %>% mutate(observation_date = ymd(observation_date), month = format(observation_date, "%Y-%m"), measurement = paste(name, month)) 
+```
+
+With the atmosphere-corrected data, join to the profile data, limiting the join to only samples where profile data are available
+```{r}
+profiles_atmcorr <- atmcorr %>% filter(!is.na(C14_atmcorr_permil) & measurement %in% noncorr[noncorr$material == "soil pore gas",]$measurement) %>% mutate(X14C = C14_atmcorr_permil, X14C_sigma = C14_atmcorr_permil_sd) %>% full_join(noncorr %>% filter(material == "soil pore gas"))
+```
+
+Limit non-atmosphere-corrected data to only profiles that include subsurface samples
+```{r}
+profiles_noncorr <- noncorr %>% filter(material=="surface emissions" & measurement %in% noncorr[noncorr$material == "soil pore gas",]$measurement) %>% full_join(noncorr %>% filter(material == "soil pore gas"))
+```
+
+
+Design plot theme
+```{r}
+proftheme <-  theme_bw() +
+  theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  theme(axis.text = element_text(color="black", size=12)) +
+  theme(axis.title = element_text(color="black", size=14)) 
+```
+
+
+Plot 14C depth profiles using the atmosphere-corrected data
+```{r}
+profiles_atmcorr <- profiles_atmcorr %>% mutate(depth = ifelse(!is.na(depth), depth, 0)) %>% arrange(measurement, depth)
+
+atmcorrplot <- ggplot(profiles_atmcorr, aes(x=X14C, y=depth, group=measurement)) +
+  geom_point(aes(colour=measurement)) +
+  geom_path(aes(colour=measurement)) +
+  scale_y_reverse(name = 'Depth (cm)', limits = c(35, -1)) +
+  xlab(expression(Delta^14*C[CO2] ~ ("\u2030"))) +
+  geom_vline(xintercept=20.75, linetype="dashed", size=0.3) +
+  geom_errorbarh(aes(xmax=X14C+X14C_sigma, xmin=X14C-X14C_sigma, colour=measurement)) +
+  scale_colour_discrete(name="Profile")  
+print(atmcorrplot + proftheme)
+```
+
+Plot 14C depth profiels using the non-corrected data
+```{r}
+profiles_noncorr <- profiles_noncorr %>% mutate(depth = ifelse(!is.na(depth), depth, 0)) %>% arrange(measurement, depth)
+
+noncorrplot <- ggplot(profiles_noncorr, aes(x=X14C, y=depth, group=measurement)) +
+  geom_point(aes(colour=measurement)) +
+  geom_path(aes(colour=measurement)) +
+  scale_y_reverse(name = 'Depth (cm)', limits = c(35, -1)) +
+  xlab(expression(Delta^14*C[CO2] ~ ("\u2030"))) +
+  geom_vline(xintercept=20.75, linetype="dashed", size=0.3) +
+  geom_errorbarh(aes(xmax=X14C+X14C_sigma, xmin=X14C-X14C_sigma, colour=measurement)) +
+  scale_colour_discrete(name="Profile") 
+print(noncorrplot + proftheme)
+ggsave("profile14C_noncorr.png", path="plots", width = 6,height = 4, units="in", dpi = 600)
+```
+
+Plot each profile individually, using non-corrected data
+```{r}
+for(i in 1:length(unique(profiles_noncorr$measurement))){
+  id <- unique(profiles_noncorr$measurement)[i]
+
+  profileplot <- ggplot(profiles_noncorr %>% filter(measurement==id), aes(x=X14C, y=depth)) + 
+    geom_point() +
+    ggtitle(id) +
+    scale_y_reverse(name = 'Depth (cm)', limits = c(30, -5)) +
+   xlab(expression(Delta^14*C[CO2] ~ ("\u2030"))) +
+   geom_errorbarh(aes(xmax=X14C+X14C_sigma, xmin=X14C-X14C_sigma), height=2) +
+   geom_path()
+  print(profileplot + proftheme)
+}
+```
