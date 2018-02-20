@@ -153,10 +153,12 @@ flux14Cplot <- ggplot(flux14C, aes(y=C14_atmcorr_permil, x=flux_CO2, colour=mont
   ylab(expression(Delta^14*C[Reco]~("\u2030"))) +
   scale_colour_manual(values=cbPalette, name="Month") +
   scale_shape_discrete(name="Month") +
-  xlab(expression(R[eco]~(mu*mol~CO[2]~m^-2~y^-1))) 
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  xlab(expression("Ecosystem respiration"~(mu*mol~CO[2]~m^-2~y^-1))) 
 
-print(flux14Cplot + flux14Ctheme)
-ggsave("chamber14C_flux.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
+print(flux14Cplot + flux14Ctheme + theme(legend.position = c(.75, .25)) 
+)
+ggsave("chamber14C_flux.png", path="plots", width = 6,height = 5, units="in", dpi = 300)
 ```
 
 Add a doy variable to the highf dataframe
@@ -199,7 +201,6 @@ monthplot_type <- ggplot(highf %>% mutate(month = format(observation_date, "%B")
   geom_point() +
   facet_grid(.~type, labeller=plot_labeller) +
   ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
-  theme(axis.text.x = element_text(angle=90, size=11, color="black", vjust=0.5)) +
 
 print(monthplot_type + boxtheme + striptheme + theme(axis.text.x = element_text(angle=90,vjust=0.5)))
 ggsave("month_type_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
@@ -212,9 +213,10 @@ monthplot_type_scatter <- ggplot(highf %>% mutate(month = format(observation_dat
   geom_point() +
   facet_grid(.~type, labeller=plot_labeller) +
   ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
-  theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)) +
+  
 
 print(monthplot_type_scatter + flux14Ctheme + striptheme)
+#+ theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)))
 ```
 
 Remove faceting
@@ -223,7 +225,6 @@ monthplot_scatter <- ggplot(highf %>% mutate(month = format(observation_date, "%
   geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
   geom_point() +
   ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
-  theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)) +
 
 print(monthplot_scatter + flux14Ctheme)
 ```
