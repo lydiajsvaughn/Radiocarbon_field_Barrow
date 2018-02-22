@@ -7,9 +7,11 @@ output: html_document
 
 Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code.  naming.csv assigns a new name to each chamber according to the naming convention for this analysis. radiocarbon_field_Barrow_2012_2013_2014.csv includes all non-corrected radiocarbon data from surface chambers and soil pore-space CO2 samples.  Dataset can be accessed at http://dx.doi.org/10.5440/1364062
 ```{r}
-atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header=T, sep=',', stringsAsFactors=F)
-noncorr <- read.csv('data/radiocarbon_field_Barrow_2012_2013_2014.csv', header=T, sep=',', stringsAsFactors=F)
-naming <- read.csv('data/naming.csv', header=T, sep=',', stringsAsFactors=F)
+atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header = T, sep = ',', stringsAsFactors = F)
+headers = read.csv('data/radiocarbon_field_Barrow_2012_2013_2014.csv', skip = 5, header = F, nrows = 1, as.is = T)
+noncorr <- read.csv('data/radiocarbon_field_Barrow_2012_2013_2014.csv', skip = 7, header = F, sep = ',', stringsAsFactors = F)
+colnames(noncorr) <- headers
+naming <- read.csv('data/naming.csv', header = T, sep = ',', stringsAsFactors = F)
 ```
 
 ```{r}
