@@ -19,6 +19,11 @@ library(tidyverse)
 library(lubridate)
 ```
 
+change the names of the variables beginning with a number
+```{r}
+noncorr <- noncorr %>% rename("X13C" = "13C", "X14C" = "14C", "X14C_sigma" = "14C_sigma", "X14C_age" = "14C_age", "X14C_age_sigma" = "14C_age_sigma")
+```
+
 Add the new chamber names to both dataframes
 ```{r}
 atmcorr <- atmcorr %>% left_join(naming)
@@ -42,7 +47,6 @@ Limit non-atmosphere-corrected data to only profiles that include subsurface sam
 profiles_noncorr <- noncorr %>% filter(material=="surface emissions" & measurement %in% noncorr[noncorr$material == "soil pore gas",]$measurement) %>% full_join(noncorr %>% filter(material == "soil pore gas"))
 ```
 
-
 Design plot theme
 ```{r}
 proftheme <-  theme_bw() +
@@ -52,6 +56,14 @@ proftheme <-  theme_bw() +
   theme(axis.title = element_text(color="black", size=11)) +
   theme(legend.text = element_text(color="black", size=9)) +
   theme(legend.title = element_text(color="black", size=10))
+
+proftheme2 <-  theme_bw() +
+  theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  theme(axis.text = element_text(color="black", size=9)) +
+  theme(axis.title = element_text(color="black", size=11)) +
+  theme(legend.text = element_text(color="black", size=8)) +
+  theme(legend.title = element_text(color="black", size=9))
 ```
 
 
@@ -82,8 +94,38 @@ noncorrplot <- ggplot(profiles_noncorr, aes(x=X14C, y=depth, group=measurement))
   geom_vline(xintercept=20.75, linetype="dashed", size=0.3) +
   geom_errorbarh(aes(xmax=X14C+X14C_sigma, xmin=X14C-X14C_sigma, colour=measurement)) +
   scale_colour_discrete(name="Profile") 
+
 print(noncorrplot + proftheme)
+
 ggsave("profile14C_noncorr.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
+```
+
+Changes to above plot in response to reviewers
+```{r}
+striptheme <- theme(strip.background = element_rect(colour="white",fill="white")) +
+  theme(panel.spacing = unit(0.5,"lines")) +
+  theme(strip.text = element_text(size=12))
+
+shifted <- profiles_noncorr 
+shifted$depth <- ifelse(shifted$depth == "0", "-2", shifted$depth)
+shifted$depth <- as.numeric(shifted$depth)
+shifted <- shifted %>% arrange(measurement, depth)
+
+noncorrplot_facet <- ggplot(shifted, aes(x=X14C, y=depth, group=measurement)) +
+  geom_vline(xintercept=20.75, linetype=2, size=0.3, colour="black") +
+  geom_hline(yintercept=0, size=0.2, colour="black") +
+  geom_point(aes(colour=position), size=0) +
+  geom_path(aes(colour=position)) +
+  scale_y_reverse(name = 'Depth (cm)', limits = c(32.5, -2.5)) +
+  xlab(expression(Delta^14*C[CO2] ~ ("\u2030"))) +
+  geom_errorbarh(aes(xmax=X14C+X14C_sigma, xmin=X14C-X14C_sigma, colour=position, height=0.7)) +
+  facet_grid(.~type) +
+  scale_colour_manual(name="Position", values=c("royalblue3", "orange")) 
+  #scale_linetype_manual(name="Position", values=c("Center"=1,"Trough"=2))
+
+print(noncorrplot_facet + proftheme2 + striptheme)
+
+ggsave("profile14C_noncorr_facet.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Plot each profile individually, using non-corrected data
