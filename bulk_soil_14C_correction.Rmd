@@ -1,0 +1,58 @@
+---
+title: "Bulk soil 14C correction"
+author: "Lydia Vaughn"
+date: "13/08/2018"
+output: html_document
+---
+ 
+Data: radiocarbon_incubation_Barrow_2014.csv is the set of radiocarbon data obtained from a soil incubation using soils sampled from the Barrow Environmental Observatory in September 2014.  naming.csv assigns a new name to each chamber according to the naming convention for this analysis. Dataset can be accessed at https://doi.org/10.5440/1418853.
+```{r}
+inc <- read.csv('data/radiocarbon_incubation_Barrow_2014.csv', skip = 7, header = F, sep = ',', stringsAsFactors = F)
+headers = read.csv('data/radiocarbon_incubation_Barrow_2014.csv', skip = 5, header = F, nrows = 1, as.is = T)
+naming <- read.csv('data/naming.csv', header = T, sep = ',', stringsAsFactors = F)
+colnames(inc) <- headers
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+change the names of the variables beginning with a number
+```{r}
+inc <- inc %>% rename("X13C" = "13C", "X14C" = "14C", "X14C_sigma" = "14C_sigma", "X14C_age" = "14C_age", "X14C_age_sigma" = "14C_age_sigma")
+```
+
+Add the correct chamber identifiers from the naming data frame
+```{r}
+inc <- inc %>% left_join(naming)
+```
+
+Associate each bulk soil 14C value with the correct CO2 production rate and CO2 14C value
+```{r}
+#subset data frame based on sample type
+wide <- inc %>% filter(sample_type == "soil") %>% select("name", "layer_top", "layer_bot", "O2", "X14C", "X14C_sigma", "oc") %>% rename("C14_soil" = "X14C", "C14_soil_sigma" = "X14C_sigma") %>% left_join(inc %>% filter(sample_type == "CO2") %>% select("name", "layer_top", "layer_bot", "O2", "X14C", "X14C_sigma", "CO2_production") %>% rename("C14_CO2" = "X14C", "C14_CO2_sigma" = "X14C_sigma"))
+```
+
+Use mean CO2 production rate to calculate total carbon mineralized over 379 days (units = mg C per g soil) and the total carbon remaining in the bulk soil (units = mg C per g soil)
+```{r}
+wide <- wide %>% mutate(C_CO2 = CO2_production * 379, C_soil = oc * 10)
+```
+
+Calculate the FM and 14C value of the bulk soil prior to the incubation.  Do this as a mass-weighted average of (a) 14C of CO2 and CO2-carbon (mg C per g soil), and (b) 14C of remaining bulk soil C and remaining bulk soil C (mg C per g soil).
+```{r}
+wide <- wide %>% mutate(f_CO2 = C_CO2 / (C_CO2 + C_soil), f_soil = C_soil / (C_CO2 + C_soil), C14_total = f_CO2 * C14_CO2 + f_soil * C14_soil)
+```
+
+Propagate the Delta14C and FM standard deviations through the above calculation
+```{r}
+wide <- wide %>% mutate(C14_total_sigma = ((f_CO2 * C14_CO2 / (C_CO2 + C_soil) * C14_CO2_sigma)^2 + (f_soil * C14_soil / (C_CO2 + C_soil) * C14_soil_sigma)^2)^0.5)
+```
+
+Export the CO2 loss-corrected bulk soil radiocarbon values as a .csv file.  Use C14_soil_sigma for the analytical error for the loss-corrected bulk soil 14C values.  (The values calculated above are misleading.)
+```{r}
+export <- wide %>% select("name", "layer_top", "layer_bot", "O2", "oc", "C14_total", "C14_soil_sigma")
+
+write.csv(export, 'data/loss_corrected_bulk_soil_radiocarbon.csv', quote=FALSE, row.names=FALSE)
+
+```
