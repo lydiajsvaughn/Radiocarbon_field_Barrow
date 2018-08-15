@@ -32,7 +32,6 @@ boxtheme <- theme_bw() +
   theme(axis.text.y = element_text(color="black", size=9)) +
   theme(axis.text.x = element_text(color="black", size=11)) +
   theme(axis.title.y = element_text(size=11)) +
-  theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) +
   theme(axis.title.x = element_blank()) 
 
 flux14Ctheme <- theme_bw() + 
@@ -106,10 +105,12 @@ bar2014<-ggplot(summ1409, aes(x=type, y=meanC14)) +
   geom_errorbar(aes(ymin=meanC14-seC14, ymax=meanC14+seC14), position=position_dodge(), width=0.2, size=0.4) +
   ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) +
   geom_hline(yintercept=0, size=0.3) +
-    scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
-    ggtitle('b') 
+  scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
+  ggtitle('c') +
+  theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) 
 
-print(bar2014 +boxtheme) 
+
+print(bar2014 + boxtheme) 
 ```
 
 Plot the CO2 fluxes from September 2014 as a bar chart
@@ -125,17 +126,35 @@ flux2014<-ggplot(summflux, aes(x=type, y=meanCO2)) +
   ylab(expression(Ecosystem~Respiration~(mu*mol~CO[2]~~m^{-2}~~s^{-1}))) +
   geom_hline(yintercept=0, size=0.3) +
     scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
-    ggtitle('a') 
+    ggtitle('b') 
 
 print(flux2014 +boxtheme) 
 ```
 
+Plot thaw depth from September 2014 as a bar chart
+```{r}
+summthaw <- flux %>% filter(month == "2014-08" | month == "2014-09") %>% group_by(type) %>% summarize(mean.thaw = mean(thaw_depth), sd.thaw = sd(thaw_depth), n.thaw = length(thaw_depth)) %>% mutate(se.thaw = sd.thaw/n.thaw^0.5)
+
+thaw2014<-ggplot(summthaw, aes(x=type, y=mean.thaw)) +
+  geom_bar(stat="identity", width=0.7) +
+  geom_errorbar(aes(ymin=mean.thaw-se.thaw, ymax=mean.thaw+se.thaw), position=position_dodge(), width=0.2, size=0.4) +
+  #ylab("Thaw depth (cm)") +
+  ylab(expression(Thaw~Depth~(cm))) +
+  geom_hline(yintercept=0, size=0.3) +
+  scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
+  ggtitle('a') 
+
+print(thaw2014 + boxtheme) 
+ 
+```
+
 Arrange the plots for publication
 ```{r}
-p1 <- flux2014 + boxtheme
-p2 <- bar2014 + boxtheme
-combo <- grid.arrange(p1, p2, nrow=2, heights=c(8,8))
-ggsave("plots2014.png", combo, path="plots", width = 6,height = 8,dpi = 300)
+p1 <- thaw2014 + boxtheme + theme(axis.title.y = element_text(vjust=2)) + theme(plot.margin = unit(c(3, 2, 3, 3), "mm"))
+p2 <- flux2014 + boxtheme 
+p3 <- bar2014 + boxtheme
+combo <- grid.arrange(p1, p2, p3, nrow=3, heights=c(8,8,8))
+ggsave("plots2014.png", combo, path="plots", width = 4.5,height =9,dpi = 300)
 ```
 
 Make a dataframe that combines the flux data and radiocarbon data
@@ -151,10 +170,10 @@ Make a scatter plot of all measurements
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 flux14Cplot <- ggplot(flux14C, aes(y=C14_atmcorr_permil, x=flux_CO2, colour=month, shape=month)) +
-  geom_point(size=2) +
+  geom_point(size=3) +
   ylab(expression(Delta^14*C[Reco]~("\u2030"))) +
-  scale_colour_manual(values=cbPalette, name="Month") +
-  scale_shape_discrete(name="Month") +
+  scale_colour_manual(values=cbPalette, name="Month", labels=c("July 2013", "September 2013", "September 2014")) +
+  scale_shape_discrete(name="Month", labels=c("July 2013", "September 2013", "September 2014")) +
   geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
   xlab(expression("Ecosystem respiration"~(mu*mol~CO[2]~m^-2~y^-1))) 
 
@@ -208,17 +227,30 @@ print(monthplot_type + boxtheme + striptheme + theme(axis.text.x = element_text(
 ggsave("month_type_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
-Same plot but as a scatterplot with doy on the x axis
+
+same plot as above but as a scatterplot
 ```{r}
-monthplot_type_scatter <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=doy)) +
+monthplot_type_scatter <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=month)) +
   geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
   geom_point() +
   facet_grid(.~type, labeller=plot_labeller) +
   ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
   
 
-print(monthplot_type_scatter + flux14Ctheme + striptheme)
-#+ theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)))
+print(monthplot_type_scatter + flux14Ctheme + striptheme + theme(axis.text.x = element_text(angle=90, size=10, color="black", vjust=0.5)))
+```
+
+Same plot but with doy on the x axis
+```{r}
+doyplot_type_scatter <- ggplot(highf %>% mutate(month = format(observation_date, "%B"), month = ordered(month, levels = c("July","August","September","October"))), aes(y=C14_atmcorr_permil, x=doy)) +
+  geom_hline(yintercept=19.7, size=0.3, linetype="dashed") +
+  geom_point() +
+  facet_grid(.~type, labeller=plot_labeller) +
+  ylab(expression(Delta^14*C[Reco] ~ ("\u2030"))) 
+  
+
+print(doyplot_type_scatter + flux14Ctheme + striptheme)
+ggsave("doy_type_scatter_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
 
 Remove faceting
