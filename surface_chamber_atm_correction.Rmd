@@ -19,6 +19,11 @@ library(tidyverse)
 library(lubridate)
 ```
 
+change the names of the variables beginning with a number
+```{r}
+field <- field %>% rename("X13C" = "13C", "X14C" = "14C", "X14C_sigma" = "14C_sigma", "X14C_age" = "14C_age", "X14C_age_sigma" = "14C_age_sigma")
+```
+
 plot the 13C values of the high concentration samples by polygon type and position
 ```{r}
 TypePlot <- ggplot(field %>% filter(sample_name %in% chambers), aes(x=type, y=X13C)) +
