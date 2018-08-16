@@ -57,33 +57,3 @@ export <- wide %>% select("sample_name", "name", "layer_top", "layer_bot", "O2",
 write.csv(export, 'data/loss_corrected_bulk_soil_radiocarbon.csv', quote=FALSE, row.names=FALSE)
 
 ```
-
-Plot the bulk soil 14C values for each depth and polygon type
-```{r}
-plottheme <- theme_bw() + 
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
-  #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
-  theme(axis.text.y = element_text(color="black", size=9)) +
-  theme(axis.text.x = element_text(color="black", size=11)) +
-  theme(axis.title.y = element_text(size=11)) +
-  theme(axis.title.x = element_blank()) 
-
-toplot <- export %>% filter(O2 == "aerobic") %>% separate(sample_name, into = c("prof", "ancillary"), sep = "-") %>% separate(ancillary, into = c("depth", "year"), sep = " ") %>% separate(name, into = c("type", "position"), by = "-") %>% separate(type, into = c("type", "plot_number"), sep = "C")
-
-summ <- toplot %>% filter(depth == "1") %>% group_by(type) %>% summarize(meanC14 = mean(C14_total, na.rm=T), sdC14 = sd(C14_total, na.rm=T), nC14 = length(C14_total[!is.na(C14_total)])) %>% mutate(seC14 = sdC14/nC14^0.5) %>% add_column(increment = "shallow") %>% full_join(toplot %>% filter(depth == "2") %>% group_by(type) %>% summarize(meanC14 = mean(C14_total, na.rm=T), sdC14 = sd(C14_total, na.rm=T), nC14 = length(C14_total)) %>% mutate(seC14 = sdC14/nC14^0.5) %>% add_column(increment = "deep"))
-
-summ$seC14 <- ifelse(summ$nC14 > 2, summ$seC14, NA)
-
-barbulk<-ggplot(summ, aes(x=increment, y=meanC14, fill=type)) +
-  #geom_hline(yintercept=17.7, linetype="dashed", size=0.3) +
-  geom_bar(stat="identity", width=0.7, position = position_dodge(0.7)) +
-  geom_errorbar(aes(ymin=meanC14-seC14, ymax=meanC14+seC14), position=position_dodge(0.7), width=0.2, size=0.4) +
-  ylab(expression(Delta^14*C ~ ("\u2030"))) +
-  geom_hline(yintercept=0, size=0.3) +
-  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
-  scale_x_discrete(breaks = c("shallow", "deep"), labels = c("Shallow", "Deep"))
-
-print(barbulk + plottheme + theme(legend.position = c(.75, .25)))
-
-ggsave("bulksoil14C.png", path="plots", width = 6,height = 5, units="in", dpi = 300)
-```

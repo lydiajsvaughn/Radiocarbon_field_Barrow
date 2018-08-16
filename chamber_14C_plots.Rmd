@@ -5,12 +5,13 @@ date: "January 24, 2018"
 output: html_document
 ---
 
-Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code. flux_CO2_CH4_Barrow_2012_2014.csv includes all associated surface CO2 flux data and can be accessed at http://dx.doi.org/10.5440/1364062
+Data: atmosphere_corrected_chamber_radiocarbon.csv is the analyzed dataset produced with the surface_chamber_atm_correction.Rmd code.  loss_corrected_bulk_soil_radiocarbon.csv is the dataset produced with the bulk_soil_14C_plots.Rmd code. flux_CO2_CH4_Barrow_2012_2014.csv includes all associated surface CO2 flux data and can be accessed at http://dx.doi.org/10.5440/1364062
 ```{r}
 atmcorr <- read.csv('data/atmosphere_corrected_chamber_radiocarbon.csv', header = T, sep = ',', stringsAsFactors = F)
 headers = read.csv('data/flux_CO2_CH4_Barrow_2012_2014.csv', skip = 5, header = F, nrows = 1, as.is = T)
 flux <- read.csv('data/flux_CO2_CH4_Barrow_2012_2014.csv', skip = 7, header = F, sep = ',', stringsAsFactors = F)
 colnames(flux) <- headers
+bulk <- read.csv('data/loss_corrected_bulk_soil_radiocarbon.csv', header = T, sep = ',', stringsAsFactors = F)
 ```
 
 ```{r}
@@ -39,6 +40,14 @@ flux14Ctheme <- theme_bw() +
   #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
   theme(axis.text = element_text(color="black", size=9)) +
   theme(axis.title = element_text(color="black", size=11)) 
+
+theme2014 <- theme_bw() + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  #theme(panel.border = element_rect(color="black", size=0.5, linetype="solid")) +
+  theme(axis.text.y = element_text(color="black", size=9)) +
+  theme(axis.text.x = element_text(color="black", size=10)) +
+  theme(axis.title.y = element_text(size=11)) +
+  theme(axis.title.x = element_blank()) 
 
 ```
 
@@ -99,7 +108,7 @@ Make a bar graph of the above data
 ```{r}
 summ1409 <- highf %>% filter(obs_year == "2014") %>% group_by(type) %>% summarize(meanC14 = mean(C14_atmcorr_permil), sdC14 = sd(C14_atmcorr_permil), nC14 = length(C14_atmcorr_permil)) %>% mutate(seC14 = sdC14/nC14^0.5)
 
-bar2014<-ggplot(summ1409, aes(x=type, y=meanC14)) +
+bar2014<-ggplot(summ1409, aes(x=type, y=meanC14, fill = type)) +
   geom_hline(yintercept=17.7, linetype="dashed", size=0.3) +
   geom_bar(stat="identity", width=0.7) +
   geom_errorbar(aes(ymin=meanC14-seC14, ymax=meanC14+seC14), position=position_dodge(), width=0.2, size=0.4) +
@@ -107,6 +116,7 @@ bar2014<-ggplot(summ1409, aes(x=type, y=meanC14)) +
   geom_hline(yintercept=0, size=0.3) +
   scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
   ggtitle('c') +
+  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
   theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) 
 
 
@@ -120,12 +130,13 @@ flux$month <- format(flux$observation_date, "%Y-%m")
 
 summflux <- flux %>% filter(month == "2014-08" | month == "2014-09") %>% group_by(type) %>% summarize(meanCO2 = mean(flux_CO2), sdCO2 = sd(flux_CO2), nCO2 = length(flux_CO2)) %>% mutate(seCO2 = sdCO2/nCO2^0.5)
 
-flux2014<-ggplot(summflux, aes(x=type, y=meanCO2)) +
+flux2014<-ggplot(summflux, aes(x=type, y=meanCO2, fill = type)) +
   geom_bar(stat="identity", width=0.7) +
   geom_errorbar(aes(ymin=meanCO2-seCO2, ymax=meanCO2+seCO2), position=position_dodge(), width=0.2, size=0.4) +
   ylab(expression(Ecosystem~Respiration~(mu*mol~CO[2]~~m^{-2}~~s^{-1}))) +
   geom_hline(yintercept=0, size=0.3) +
     scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
+  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
     ggtitle('b') 
 
 print(flux2014 +boxtheme) 
@@ -135,26 +146,53 @@ Plot thaw depth from September 2014 as a bar chart
 ```{r}
 summthaw <- flux %>% filter(month == "2014-08" | month == "2014-09") %>% group_by(type) %>% summarize(mean.thaw = mean(thaw_depth), sd.thaw = sd(thaw_depth), n.thaw = length(thaw_depth)) %>% mutate(se.thaw = sd.thaw/n.thaw^0.5)
 
-thaw2014<-ggplot(summthaw, aes(x=type, y=mean.thaw)) +
+thaw2014<-ggplot(summthaw, aes(x=type, y=mean.thaw, fill = type)) +
   geom_bar(stat="identity", width=0.7) +
   geom_errorbar(aes(ymin=mean.thaw-se.thaw, ymax=mean.thaw+se.thaw), position=position_dodge(), width=0.2, size=0.4) +
   #ylab("Thaw depth (cm)") +
   ylab(expression(Thaw~Depth~(cm))) +
   geom_hline(yintercept=0, size=0.3) +
   scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
+  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
   ggtitle('a') 
 
 print(thaw2014 + boxtheme) 
  
 ```
 
+Plot bulk soil radiocarbon from September 2014 as a bar chart
+```{r}
+toplot <- bulk %>% filter(O2 == "aerobic") %>% separate(sample_name, into = c("prof", "ancillary"), sep = "-") %>% separate(ancillary, into = c("depth", "year"), sep = " ") %>% separate(name, into = c("type", "position"), by = "-") %>% separate(type, into = c("type", "plot_number"), sep = "C")
+
+summ <- toplot %>% filter(depth == "1") %>% group_by(type) %>% summarize(meanC14 = mean(C14_total, na.rm=T), sdC14 = sd(C14_total, na.rm=T), nC14 = length(C14_total[!is.na(C14_total)])) %>% mutate(seC14 = sdC14/nC14^0.5) %>% add_column(increment = "shallow") %>% full_join(toplot %>% filter(depth == "2") %>% group_by(type) %>% summarize(meanC14 = mean(C14_total, na.rm=T), sdC14 = sd(C14_total, na.rm=T), nC14 = length(C14_total)) %>% mutate(seC14 = sdC14/nC14^0.5) %>% add_column(increment = "deep"))
+
+summ$seC14 <- ifelse(summ$nC14 > 2, summ$seC14, NA)
+
+barbulk<-ggplot(summ, aes(x=increment, y=meanC14, fill=type)) +
+  geom_hline(yintercept=17.7, linetype="dashed", size=0.3) +
+  geom_bar(stat="identity", width=0.7, position = position_dodge(0.7)) +
+  geom_errorbar(aes(ymin=meanC14-seC14, ymax=meanC14+seC14), position=position_dodge(0.7), width=0.2, size=0.4) +
+  ylab(expression(Delta^14*C[soil] ~ ("\u2030"))) +
+  geom_hline(yintercept=0, size=0.3) +
+  scale_fill_manual(breaks=c("F","H","L"), labels=c("Flat-centered","High-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
+  scale_x_discrete(breaks = c("shallow", "deep"), labels = c("Shallow", "Deep")) +
+  ggtitle('d') 
+
+
+print(barbulk + boxtheme + theme(legend.position = c(.75, .25)))
+
+#ggsave("bulksoil14C.png", path="plots", width = 6,height = 5, units="in", dpi = 300)
+```
+
 Arrange the plots for publication
 ```{r}
-p1 <- thaw2014 + boxtheme + theme(axis.title.y = element_text(vjust=2)) + theme(plot.margin = unit(c(3, 2, 3, 3), "mm"))
-p2 <- flux2014 + boxtheme 
-p3 <- bar2014 + boxtheme
-combo <- grid.arrange(p1, p2, p3, nrow=3, heights=c(8,8,8))
-ggsave("plots2014.png", combo, path="plots", width = 4.5,height =9,dpi = 300)
+p1 <- thaw2014 + theme2014 + theme(axis.title.y = element_text(vjust=2)) + theme(plot.margin = unit(c(3, 5, 3, 4), "mm"))
+p2 <- flux2014 + theme2014 + theme(plot.margin = unit(c(3, 2, 3, 6), "mm"))
+p3 <- bar2014 + theme2014 + theme(plot.margin = unit(c(3, 5, 3, 3), "mm"))
+p4 <- barbulk + theme2014 + theme(legend.position = c(.75, .25)) + theme(plot.margin = unit(c(3, 2, 3, 4), "mm"))
+combo <- grid.arrange(p1, p2, p3, p4, ncol=2, nrow=2, heights = c(8,8))
+#combo <- grid.arrange(p1, p2, p3, p4, ncol=2, nrow=2, heights=c(8,8,8))
+ggsave("plots2014.png", combo, path="plots", width = 8,height =7,dpi = 300)
 ```
 
 Make a dataframe that combines the flux data and radiocarbon data
@@ -226,7 +264,6 @@ monthplot_type <- ggplot(highf %>% mutate(month = format(observation_date, "%B")
 print(monthplot_type + boxtheme + striptheme + theme(axis.text.x = element_text(angle=90,vjust=0.5)))
 ggsave("month_type_14C.png", path="plots", width = 6,height = 4, units="in", dpi = 300)
 ```
-
 
 same plot as above but as a scatterplot
 ```{r}
