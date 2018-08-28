@@ -116,7 +116,7 @@ bar2014<-ggplot(summ1409, aes(x=type, y=meanC14, fill = type)) +
   geom_hline(yintercept=0, size=0.3) +
   scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
   ggtitle('c') +
-  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
+  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "goldenrod1" ), name = "Polygon type") +
   theme(plot.title = element_text(colour = "black", size=14, hjust = -0.1)) 
 
 
@@ -136,7 +136,7 @@ flux2014<-ggplot(summflux, aes(x=type, y=meanCO2, fill = type)) +
   ylab(expression(Ecosystem~Respiration~(mu*mol~CO[2]~~m^{-2}~~s^{-1}))) +
   geom_hline(yintercept=0, size=0.3) +
     scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
-  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
+  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "goldenrod1" ), name = "Polygon type") +
     ggtitle('b') 
 
 print(flux2014 +boxtheme) 
@@ -153,7 +153,7 @@ thaw2014<-ggplot(summthaw, aes(x=type, y=mean.thaw, fill = type)) +
   ylab(expression(Thaw~Depth~(cm))) +
   geom_hline(yintercept=0, size=0.3) +
   scale_x_discrete(breaks=c("Flat","High","Low"), labels=c("Flat-centered","High-centered","Low-centered"))  +
-  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
+  scale_fill_manual(breaks=c("H","F","L"), labels=c("High-centered","Flat-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "goldenrod1" ), name = "Polygon type") +
   ggtitle('a') 
 
 print(thaw2014 + boxtheme) 
@@ -172,9 +172,9 @@ barbulk<-ggplot(summ, aes(x=increment, y=meanC14, fill=type)) +
   geom_hline(yintercept=17.7, linetype="dashed", size=0.3) +
   geom_bar(stat="identity", width=0.7, position = position_dodge(0.7)) +
   geom_errorbar(aes(ymin=meanC14-seC14, ymax=meanC14+seC14), position=position_dodge(0.7), width=0.2, size=0.4) +
-  ylab(expression(Delta^14*C[soil] ~ ("\u2030"))) +
+  ylab(expression(Delta^14*C[SOC] ~ ("\u2030"))) +
   geom_hline(yintercept=0, size=0.3) +
-  scale_fill_manual(breaks=c("F","H","L"), labels=c("Flat-centered","High-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "darkgoldenrod1" ), name = "Polygon type") +
+  scale_fill_manual(breaks=c("F","H","L"), labels=c("Flat-centered","High-centered","Low-centered"), values = c("darkslateblue", "aquamarine4", "goldenrod1" ), name = "Polygon type") +
   scale_x_discrete(breaks = c("shallow", "deep"), labels = c("Shallow", "Deep")) +
   ggtitle('d') 
 
