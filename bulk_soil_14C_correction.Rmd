@@ -37,7 +37,7 @@ wide <- inc %>% filter(sample_type == "soil") %>% select("sample_name", "name", 
 
 Use mean CO2 production rate to calculate total carbon mineralized over 379 days (units = mg C per g soil) and the total carbon remaining in the bulk soil (units = mg C per g soil)
 ```{r}
-wide <- wide %>% mutate(C_CO2 = CO2_production * 379, C_soil = oc * 10)
+wide <- wide %>% mutate(C_CO2 = CO2_production * 387, C_soil = oc * 10)
 ```
 
 Calculate the FM and 14C value of the bulk soil prior to the incubation.  Do this as a mass-weighted average of (a) 14C of CO2 and CO2-carbon (mg C per g soil), and (b) 14C of remaining bulk soil C and remaining bulk soil C (mg C per g soil).
